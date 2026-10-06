@@ -1,0 +1,107 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+  }
+
+  html, body, #root {
+    height: 100%;
+    width: 100%;
+    overflow: hidden;
+  }
+
+  body {
+    background-color: #1a1b26;
+    color: #a9b1d6;
+    font-family: 'Inter', system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: #1a1b26;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: #2a2b3d;
+    border-radius: 3px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: #3a3b55;
+  }
+}
+
+@layer components {
+  .tab-active {
+    @apply bg-ide-panel border-b-2 border-ide-accent text-ide-text-bright;
+  }
+
+  .tab-inactive {
+    @apply text-ide-text hover:bg-ide-panel/50 hover:text-ide-text-bright;
+  }
+
+  .sidebar-item {
+    @apply flex items-center gap-2 px-2 py-1 rounded cursor-pointer text-sm text-ide-text hover:bg-ide-border hover:text-ide-text-bright transition-colors;
+  }
+
+  .sidebar-item-active {
+    @apply bg-ide-accent/20 text-ide-accent;
+  }
+
+  .btn-primary {
+    @apply bg-ide-accent hover:bg-ide-accent-hover text-white px-4 py-2 rounded-md text-sm font-medium transition-colors cursor-pointer;
+  }
+
+  .btn-secondary {
+    @apply bg-ide-border hover:bg-ide-border/80 text-ide-text-bright px-4 py-2 rounded-md text-sm font-medium transition-colors cursor-pointer;
+  }
+
+  .diff-line-add {
+    @apply bg-diff-add text-ide-green;
+  }
+
+  .diff-line-remove {
+    @apply bg-diff-remove text-ide-red;
+  }
+
+  .chat-message-user {
+    @apply bg-ide-accent/20 border border-ide-accent/30 rounded-lg p-3 text-sm text-ide-text-bright;
+  }
+
+  .chat-message-ai {
+    @apply bg-ide-border/50 rounded-lg p-3 text-sm text-ide-text-bright;
+  }
+
+  .code-block {
+    @apply bg-ide-bg rounded-md p-3 font-mono text-xs text-ide-text-bright border border-ide-border;
+  }
+}
+
+/* Smooth animations */
+.slide-in {
+  animation: slideIn 0.2s ease-out;
+}
+
+@keyframes slideIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.pulse-dot {
+  animation: pulseDot 2s infinite;
+}
+
+@keyframes pulseDot {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
