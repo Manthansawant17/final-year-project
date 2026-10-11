@@ -10,6 +10,7 @@ const useStore = create((set, get) => ({
     {
       id: 1,
       name: 'core-service',
+      type: 'folder',
       expanded: true,
       children: [
         {
@@ -40,29 +41,47 @@ const useStore = create((set, get) => ({
                           id: 111111,
                           name: 'company',
                           type: 'folder',
-                          expanded: false,
-                          children: [],
-                        },
-                        {
-                          id: 111112,
-                          name: 'service',
-                          type: 'folder',
                           expanded: true,
                           children: [
-                            { id: 1111121, name: 'AppController.java', type: 'file', lang: 'java' },
-                            { id: 1111122, name: 'AppService.java', type: 'file', lang: 'java' },
+                            {
+                              id: 111112,
+                              name: 'service',
+                              type: 'folder',
+                              expanded: true,
+                              children: [
+                                { id: 1111121, name: 'AppController.java', type: 'file', lang: 'java' },
+                                { id: 1111122, name: 'AppService.java', type: 'file', lang: 'java' },
+                              ],
+                            },
                           ],
                         },
                       ],
                     },
                   ],
                 },
+                {
+                  id: 1112,
+                  name: 'resources',
+                  type: 'folder',
+                  expanded: false,
+                  children: [
+                    { id: 11121, name: 'application.yml', type: 'file', lang: 'yml' },
+                  ],
+                },
+              ],
+            },
+            {
+              id: 112,
+              name: 'test',
+              type: 'folder',
+              expanded: false,
+              children: [
+                { id: 1121, name: 'AppControllerTest.java', type: 'file', lang: 'java' },
               ],
             },
           ],
         },
-        { id: 12, name: 'test', type: 'folder', expanded: false, children: [] },
-        { id: 13, name: 'Settings', type: 'settings', expanded: false, children: [] },
+        { id: 12, name: 'pom.xml', type: 'file', lang: 'xml' },
       ],
     },
   ],
@@ -134,7 +153,7 @@ const useStore = create((set, get) => ({
   ],
   chatInput: '',
   isAiTyping: false,
-  aiModel: 'GPT-4o',
+  aiModel: 'Gemini 3.8 Flash (Free)',
   mcpConnected: true,
 
   // ── Actions ───────────────────────────────────────────
@@ -143,6 +162,29 @@ const useStore = create((set, get) => ({
   setSidebarSection: (section) => set({ sidebarSection: section }),
   setSelectedFile: (file) => set({ selectedFile: file }),
   setChatInput: (input) => set({ chatInput: input }),
+
+  activeRepoName: 'core-service',
+  setActiveRepoName: (name) => set({ activeRepoName: name }),
+
+  collapseAll: () => {
+    const collapse = (nodes) =>
+      nodes.map((n) => ({
+        ...n,
+        expanded: false,
+        children: n.children ? collapse(n.children) : undefined,
+      }))
+    set((s) => ({ repositories: collapse(s.repositories) }))
+  },
+
+  expandAll: () => {
+    const expand = (nodes) =>
+      nodes.map((n) => ({
+        ...n,
+        expanded: true,
+        children: n.children ? expand(n.children) : undefined,
+      }))
+    set((s) => ({ repositories: expand(s.repositories) }))
+  },
 
   toggleFolder: (nodeId) => {
     const toggle = (nodes) =>

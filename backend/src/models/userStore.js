@@ -18,7 +18,11 @@ export function createUser({ id, email, password, name, avatar, provider, provid
 }
 export const findUserById = (id) => users.get(id) || null
 export function findUserByEmail(email) {
-  for (const u of users.values()) if (u.email === email) return u
+  if (!email) return null
+  const clean = email.trim().toLowerCase()
+  for (const u of users.values()) {
+    if (u.email && u.email.trim().toLowerCase() === clean) return u
+  }
   return null
 }
 export function findUserByProvider(provider, providerId) {

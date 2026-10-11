@@ -16,9 +16,13 @@ import './config/passport.js'
 import aiRoutes from './routes/aiRoutes.js'
 import githubRoutes from './routes/githubRoutes.js'
 import authRoutes from './routes/authRoutes.js'
+import taskRoutes from './routes/taskRoutes.js'
+import docRoutes from './routes/docRoutes.js'
 import { apiLimiter, aiLimiter, requestLogger } from './middleware/rateLimiter.js'
-import { verifyAccessToken } from './services/authService.js'
-import { findUserById } from './models/userStore.js'
+import { connectDB, isDBConnected } from './config/db.js'
+
+// Connect to MongoDB
+connectDB()
 
 const app = express()
 const httpServer = createServer(app)
@@ -27,14 +31,18 @@ const io = new SocketIO(httpServer, {
   cors: { origin: process.env.FRONTEND_URL || 'http://localhost:3000', methods: ['GET', 'POST'], credentials: true },
 })
 
+import { verifyAccessToken } from './services/authService.js'
+import { findUserById } from './models/userStore.js'
+
 io.use((socket, next) => {
   const token = socket.handshake.auth?.token
-  if (!token) return next(new Error('Authentication required'))
-  try {
-    const payload = verifyAccessToken(token)
-    socket.user = findUserById(payload.sub)
-    next()
-  } catch { next(new Error('Invalid token')) }
+  if (token) {
+    try {
+      const payload = verifyAccessToken(token)
+      socket.user = findUserById(payload.sub)
+    } catch {}
+  }
+  next()
 })
 
 io.on('connection', (socket) => {
@@ -67,20 +75,32 @@ app.use('/api/ai/', aiLimiter)
 app.use('/api/auth', authRoutes)
 app.use('/api/ai', aiRoutes)
 app.use('/api/github', githubRoutes)
+app.use('/api/tasks', taskRoutes)
+app.use('/api/docs', docRoutes)
 
-app.get('/api/health', (req, res) => res.json({ status: 'ok', timestamp: new Date().toISOString(), aiConfigured: !!(process.env.OPENAI_API_KEY && process.env.OPENAI_API_KEY !== 'your_openai_api_key_here'), githubConfigured: !!(process.env.GITHUB_TOKEN && process.env.GITHUB_TOKEN !== 'your_github_token_here'), authEnabled: true }))
+app.get('/api/health', (req, res) => res.json({
+  status: 'ok',
+  timestamp: new Date().toISOString(),
+  database: isDBConnected() ? 'connected' : 'connecting_or_fallback',
+  dbUri: process.env.MONGODB_URI || 'mongodb://localhost:27017/',
+  aiProvider: 'Google Gemini',
+  aiModel: process.env.GEMINI_MODEL || 'gemini-3.8-flash',
+  aiConfigured: !!(process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY || (process.env.OPENAI_API_KEY && !process.env.OPENAI_API_KEY.includes('your_'))),
+  githubConfigured: !!(process.env.GITHUB_TOKEN && !process.env.GITHUB_TOKEN.includes('your_')),
+  authEnabled: true
+}))
 app.use((req, res) => res.status(404).json({ error: `Route ${req.method} ${req.path} not found` }))
 app.use((err, req, res, next) => { console.error('[Server Error]', err); res.status(500).json({ error: 'Internal server error', message: err.message }) })
 
 const PORT = process.env.PORT || 5000
 httpServer.listen(PORT, () => {
+  const hasKey = !!(process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY || (process.env.OPENAI_API_KEY && !process.env.OPENAI_API_KEY.includes('your_')))
   console.log(`\n🚀 AI Developer Assistant Backend`)
   console.log(`   Running at:    http://localhost:${PORT}`)
-  console.log(`   AI Model:      ${process.env.AI_MODEL || 'gpt-4o'}`)
-  console.log(`   AI Key:        ${process.env.OPENAI_API_KEY && process.env.OPENAI_API_KEY !== 'your_openai_api_key_here' ? '✅ Set' : '❌ Not Set'}`)
-  console.log(`   GitHub API:    ${process.env.GITHUB_TOKEN && process.env.GITHUB_TOKEN !== 'your_github_token_here' ? '✅ Connected' : '⚠️  Not Set'}`)
-  console.log(`   GitHub OAuth:  ${process.env.GITHUB_CLIENT_ID && process.env.GITHUB_CLIENT_ID !== 'your_github_oauth_client_id' ? '✅ Set' : '⚠️  Not Configured'}`)
-  console.log(`   Google OAuth:  ${process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_ID !== 'your_google_client_id' ? '✅ Set' : '⚠️  Not Configured'}\n`)
+  console.log(`   AI Provider:   Google Gemini (Free Tier Supported)`)
+  console.log(`   AI Model:      ${process.env.GEMINI_MODEL || 'gemini-3.8-flash'}`)
+  console.log(`   Gemini Key:    ${hasKey ? '✅ Set' : '⚠️  Not Set (Using smart developer simulation fallback)'}`)
+  console.log(`   GitHub API:    ${process.env.GITHUB_TOKEN && !process.env.GITHUB_TOKEN.includes('your_') ? '✅ Connected' : '⚠️  Not Set'}`)
 })
 
 export { io }

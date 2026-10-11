@@ -7,6 +7,8 @@ import AIAssistant from '../components/AIAssistant'
 import useStore from '../store/useStore'
 import { Globe, RefreshCw } from 'lucide-react'
 
+import CodeEditor from '../components/CodeEditor'
+
 function EditorArea() {
   const { activeEditorTab } = useStore()
 
@@ -23,37 +25,109 @@ function EditorArea() {
     )
   }
 
-  // Default: show PR diff
-  return <DiffViewer />
+  if (activeEditorTab === 'pr-452') {
+    return <DiffViewer />
+  }
+
+  // Render file editor for selected file tabs
+  return <CodeEditor tabId={activeEditorTab} />
 }
 
 export default function IDELayout() {
+  const { setActiveEditorTab, openTabs } = useStore()
+  const [fullscreen, setFullscreen] = React.useState(false)
+
+  const handleRefresh = () => {
+    window.location.reload()
+  }
+
+  const handleBack = () => {
+    const idx = openTabs.findIndex((t) => t.id === useStore.getState().activeEditorTab)
+    if (idx > 0) setActiveEditorTab(openTabs[idx - 1].id)
+  }
+
+  const handleForward = () => {
+    const idx = openTabs.findIndex((t) => t.id === useStore.getState().activeEditorTab)
+    if (idx < openTabs.length - 1 && idx >= 0) setActiveEditorTab(openTabs[idx + 1].id)
+  }
+
+  const toggleFullscreen = () => {
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen?.()
+      setFullscreen(true)
+    } else {
+      document.exitFullscreen?.()
+      setFullscreen(false)
+    }
+  }
+
   return (
     <div className="flex flex-col h-screen overflow-hidden bg-ide-bg">
       {/* Top Title Bar */}
-      <div className="flex items-center justify-between px-4 h-9 bg-ide-sidebar border-b border-ide-border shrink-0">
+      <div className="flex items-center justify-between px-4 h-9 bg-ide-sidebar border-b border-ide-border shrink-0 select-none">
         <div className="flex items-center gap-2">
-          {/* Traffic lights (decorative) */}
-          <div className="flex gap-1.5">
-            <div className="w-3 h-3 rounded-full bg-[#ff5f57]" />
-            <div className="w-3 h-3 rounded-full bg-[#ffbd2e]" />
-            <div className="w-3 h-3 rounded-full bg-[#28c840]" />
+          {/* Traffic lights with functionality */}
+          <div className="flex gap-1.5 items-center">
+            <button
+              onClick={() => window.close()}
+              title="Close workspace"
+              className="w-3 h-3 rounded-full bg-[#ff5f57] hover:brightness-110 cursor-pointer"
+            />
+            <button
+              onClick={() => setActiveEditorTab('terminal')}
+              title="Minimize to Terminal"
+              className="w-3 h-3 rounded-full bg-[#ffbd2e] hover:brightness-110 cursor-pointer"
+            />
+            <button
+              onClick={toggleFullscreen}
+              title="Toggle Fullscreen"
+              className="w-3 h-3 rounded-full bg-[#28c840] hover:brightness-110 cursor-pointer"
+            />
           </div>
-          <button className="text-ide-text hover:text-ide-text-bright transition-colors ml-3 cursor-pointer">◁</button>
-          <button className="text-ide-text hover:text-ide-text-bright transition-colors cursor-pointer">▷</button>
+          <button
+            onClick={handleBack}
+            title="Previous Tab"
+            className="text-ide-text hover:text-ide-text-bright transition-colors ml-3 cursor-pointer text-xs"
+          >
+            ◁
+          </button>
+          <button
+            onClick={handleForward}
+            title="Next Tab"
+            className="text-ide-text hover:text-ide-text-bright transition-colors cursor-pointer text-xs"
+          >
+            ▷
+          </button>
         </div>
 
-        {/* URL bar */}
+        {/* URL / Workspace bar */}
         <div className="flex items-center gap-2 bg-ide-bg border border-ide-border rounded-md px-3 py-1 flex-1 mx-6 max-w-sm">
           <Globe size={11} className="text-ide-text/50 shrink-0" />
-          <span className="text-xs text-ide-text/70 truncate">developer UI.com</span>
-          <RefreshCw size={11} className="text-ide-text/50 ml-auto shrink-0 cursor-pointer hover:text-ide-text-bright" />
+          <span className="text-xs text-ide-text/70 truncate">developer-studio://core-service/pr-452</span>
+          <button
+            onClick={handleRefresh}
+            title="Reload IDE"
+            className="ml-auto text-ide-text/50 hover:text-ide-text-bright cursor-pointer"
+          >
+            <RefreshCw size={11} className="shrink-0" />
+          </button>
         </div>
 
-        <div className="flex items-center gap-2 text-ide-text/50">
-          <span className="text-sm">⊕</span>
-          <span className="text-sm">⊘</span>
-          <span className="text-sm">⊡</span>
+        <div className="flex items-center gap-3 text-ide-text/50">
+          <button
+            onClick={() => setActiveEditorTab('pr-452')}
+            title="Open PR Diff"
+            className="text-xs hover:text-ide-text-bright cursor-pointer"
+          >
+            ⊕ Diff
+          </button>
+          <button
+            onClick={() => setActiveEditorTab('terminal')}
+            title="Open Terminal"
+            className="text-xs hover:text-ide-text-bright cursor-pointer"
+          >
+            ⊘ Terminal
+          </button>
         </div>
       </div>
 

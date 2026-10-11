@@ -44,16 +44,30 @@ ai-developer-assistant/
     └── package.json
 ```
 
-## 🚀 Getting Started
+## 🤖 AI Provider: Google Gemini (Free Tier)
+
+This project is configured to use **Google Gemini Free Tier models** via the official `@google/genai` SDK:
+- **`gemini-2.5-flash`** (Recommended - Fast, intelligent code refactoring, 100% free on Google AI Studio)
+- **`gemini-2.0-flash`** (Free tier)
+- **`gemini-1.5-flash`** (Free tier)
+
+You can obtain a free API key at **[Google AI Studio](https://aistudio.google.com/)**.
 
 ### 1. Configure Backend Environment
 
 Edit `backend/.env`:
 ```env
-OPENAI_API_KEY=sk-your-openai-api-key
-GITHUB_TOKEN=ghp_your-github-token
-GITHUB_OWNER=your-github-username
+PORT=5000
+# Get your free key at https://aistudio.google.com/
+GEMINI_API_KEY=your_gemini_api_key_here
+GEMINI_MODEL=gemini-2.5-flash
+
+# Optional GitHub Integration
+GITHUB_TOKEN=ghp_your_token
+GITHUB_OWNER=your_github_username
 ```
+
+> **Note**: Even without an API key, the system has an integrated intelligent fallback for developer commands and code refactoring so the IDE works out-of-the-box.
 
 ### 2. Install & Run Backend
 
@@ -110,8 +124,8 @@ npm run dev
 
 | Layer | Technology |
 |-------|-----------|
-| Frontend | React 18, Vite, Tailwind CSS, Zustand |
-| Backend | Node.js, Express, Socket.IO |
+| Frontend | React 18, Vite, Tailwind CSS |
+| Backend | Node.js, Express |
 | AI | OpenAI GPT-4o |
 | GitHub | GitHub REST API v3 |
 | Icons | Lucide React |

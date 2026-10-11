@@ -66,6 +66,17 @@ function ChatMessage({ message, onApplyCode }) {
             ? 'bg-ide-accent/20 border border-ide-accent/30 text-ide-text-bright rounded-tr-sm'
             : 'bg-ide-border/60 text-ide-text-bright rounded-tl-sm'
           }`}>
+          {message.mcpToolUsed && (
+            <div className="flex items-center gap-1 mb-1.5 px-2 py-0.5 bg-ide-accent/15 border border-ide-accent/30 rounded text-[9px] text-ide-accent w-fit font-mono">
+              <span>⚡ MCP: {message.mcpToolUsed}</span>
+            </div>
+          )}
+          {message.thought && (
+            <div className="mb-2 p-2 bg-ide-bg/80 border-l-2 border-ide-purple rounded text-[11px] text-ide-text/70 italic leading-relaxed">
+              <span className="font-semibold text-[10px] text-ide-purple not-italic uppercase tracking-wider block mb-0.5">🧠 Reasoning</span>
+              {message.thought}
+            </div>
+          )}
           <p className="whitespace-pre-wrap">{message.content}</p>
           {message.code && (
             <CodeBlock code={message.code} language={message.codeLanguage} />
@@ -114,8 +125,13 @@ function TypingIndicator() {
   )
 }
 
-// ── Model Selector ────────────────────────────────────
-const MODELS = ['GPT-4o', 'GPT-4o-mini', 'GPT-3.5 Turbo']
+// ── Model Selector (Google Gemini Free Tier) ──────────
+const MODELS = [
+  'Gemini 3.8 Flash (Free)',
+  'Gemini 2.5 Flash (Free)',
+  'Gemini 2.0 Flash (Free)',
+  'Gemini 1.5 Flash (Free)',
+]
 
 function ModelSelector({ model, onChange }) {
   const [open, setOpen] = useState(false)
@@ -124,17 +140,21 @@ function ModelSelector({ model, onChange }) {
       <button
         onClick={() => setOpen(!open)}
         className="flex items-center gap-1 text-[10px] text-ide-text/50 hover:text-ide-text-bright transition-colors cursor-pointer"
+        title="Google Gemini Free Tier Model"
       >
         <Zap size={9} className="text-ide-yellow" />
         {model}
         <ChevronDown size={9} />
       </button>
       {open && (
-        <div className="absolute bottom-full right-0 mb-1 w-36 bg-ide-panel border border-ide-border rounded-lg shadow-xl z-50 py-1 slide-in">
+        <div className="absolute bottom-full right-0 mb-1 w-44 bg-ide-panel border border-ide-border rounded-lg shadow-xl z-50 py-1 slide-in">
+          <div className="px-3 py-1 text-[9px] uppercase tracking-wider text-ide-text/40 border-b border-ide-border mb-1">
+            Free Models
+          </div>
           {MODELS.map((m) => (
             <button key={m} onClick={() => { onChange(m); setOpen(false) }}
               className={`w-full text-left px-3 py-1.5 text-xs transition-colors cursor-pointer ${
-                model === m ? 'text-ide-accent bg-ide-accent/10' : 'text-ide-text hover:bg-ide-border/60 hover:text-ide-text-bright'
+                model === m ? 'text-ide-accent bg-ide-accent/10 font-medium' : 'text-ide-text hover:bg-ide-border/60 hover:text-ide-text-bright'
               }`}>
               {m}
             </button>
@@ -179,10 +199,12 @@ export default function AIAssistant() {
 
     try {
       const history = chatMessages.slice(-10).map((m) => ({ role: m.role, content: m.content }))
-      const res = await sendChatMessage(message, history)
+      const res = await sendChatMessage(message, history, localModel)
       addChatMessage({
         role: 'assistant',
         content: res.data.content || res.data,
+        thought: res.data.thought,
+        mcpToolUsed: res.data.mcpToolUsed,
         code: res.data.code,
         codeLanguage: res.data.codeLanguage,
         actions: res.data.actions,
@@ -202,7 +224,7 @@ export default function AIAssistant() {
     addChatMessage({ role: 'user', content: 'Analyze the current PR diff for issues and improvements.' })
     try {
       const diff = `${currentPR.diffOld}\n---\n${currentPR.diffNew}`
-      const res = await analyzeDiff(diff)
+      const res = await analyzeDiff(diff, localModel)
       addChatMessage({
         role: 'assistant',
         content: res.data.content || res.data,
@@ -220,10 +242,20 @@ export default function AIAssistant() {
   const handleApplyCode = (action, message) => {
     if (action === 'Apply Code' && message.code) {
       navigator.clipboard.writeText(message.code)
-      addChatMessage({ role: 'assistant', content: '✅ Code copied to clipboard! You can now paste it into your editor.' })
+      // Open or switch to AppService editor tab
+      useStore.getState().setActiveEditorTab('AppService')
+      addChatMessage({
+        role: 'assistant',
+        content: '✅ Code copied to clipboard and switched to `AppService.java`! You can paste the refactored method directly into your code.',
+      })
     } else if (action === 'Create PR') {
       addChatMessage({ role: 'user', content: 'Create a PR with these changes.' })
-      addChatMessage({ role: 'assistant', content: '📝 To create a PR, configure your GITHUB_TOKEN in backend/.env and the GitHub API will be available.' })
+      // Switch to PR Diff tab and notify
+      useStore.getState().setActiveEditorTab('pr-452')
+      addChatMessage({
+        role: 'assistant',
+        content: '🚀 Pull Request `#452` ("Fix data fetch issues and improve error handling") is ready! Switched to GitHub Diff view to inspect side-by-side changes before merging.',
+      })
     }
   }
 

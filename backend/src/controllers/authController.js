@@ -7,7 +7,7 @@ export async function register(req, res) {
   try {
     const { email, password, name } = req.body
     if (!email || !password || !name) return res.status(400).json({ error: 'email, password, and name are required' })
-    if (password.length < 8) return res.status(400).json({ error: 'Password must be at least 8 characters' })
+    if (password.length < 6) return res.status(400).json({ error: 'Password must be at least 6 characters' })
     const user = await registerUser({ email, password, name })
     const tokens = generateTokens(user)
     res.cookie('refreshToken', tokens.refreshToken, COOKIE_OPTS)
@@ -36,11 +36,11 @@ export function logout(req, res) {
   return res.json({ message: 'Logged out successfully' })
 }
 
-export function refresh(req, res) {
+export async function refresh(req, res) {
   try {
     const rt = req.cookies?.refreshToken || req.body?.refreshToken
     if (!rt) return res.status(401).json({ error: 'No refresh token' })
-    const tokens = verifyAndRotateRefreshToken(rt)
+    const tokens = await verifyAndRotateRefreshToken(rt)
     res.cookie('refreshToken', tokens.refreshToken, COOKIE_OPTS)
     return res.json({ accessToken: tokens.accessToken })
   } catch (err) {

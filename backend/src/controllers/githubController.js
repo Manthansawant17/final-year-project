@@ -80,3 +80,80 @@ export async function createPR(req, res) {
     return res.status(500).json({ error: 'Failed to create PR', details: err.message })
   }
 }
+
+/**
+ * GET /api/github/commits/:repo
+ */
+export async function listCommits(req, res) {
+  try {
+    const { repo } = req.params
+    const { branch = 'main', owner } = req.query
+    const commits = await githubService.getCommits(owner || OWNER, repo, branch)
+    return res.json(commits)
+  } catch (err) {
+    console.error('[GitHub Commits Error]', err.message)
+    return res.status(500).json({ error: 'Failed to fetch commits', details: err.message })
+  }
+}
+
+/**
+ * GET /api/github/issues/:repo
+ */
+export async function listIssues(req, res) {
+  try {
+    const { repo } = req.params
+    const { state = 'open', owner } = req.query
+    const issues = await githubService.getIssues(owner || OWNER, repo, state)
+    return res.json(issues)
+  } catch (err) {
+    console.error('[GitHub Issues Error]', err.message)
+    return res.status(500).json({ error: 'Failed to fetch issues', details: err.message })
+  }
+}
+
+/**
+ * POST /api/github/issues/:repo
+ */
+export async function createIssue(req, res) {
+  try {
+    const { repo } = req.params
+    const { title, body, labels, owner } = req.body
+    if (!title) return res.status(400).json({ error: 'title is required' })
+    const issue = await githubService.createIssue(owner || OWNER, repo, { title, body, labels })
+    return res.status(201).json(issue)
+  } catch (err) {
+    console.error('[GitHub Create Issue Error]', err.message)
+    return res.status(500).json({ error: 'Failed to create issue', details: err.message })
+  }
+}
+
+/**
+ * GET /api/github/tree/:repo
+ */
+export async function getRepoTree(req, res) {
+  try {
+    const { repo } = req.params
+    const { branch = 'main', owner } = req.query
+    const tree = await githubService.getRepoTree(owner || OWNER, repo, branch)
+    return res.json(tree)
+  } catch (err) {
+    console.error('[GitHub Tree Error]', err.message)
+    return res.status(500).json({ error: 'Failed to fetch repo tree', details: err.message })
+  }
+}
+
+/**
+ * GET /api/github/repository/:repo
+ */
+export async function getRepoDetails(req, res) {
+  try {
+    const { repo } = req.params
+    const { owner } = req.query
+    const repoData = await githubService.getRepository(owner || OWNER, repo)
+    return res.json(repoData)
+  } catch (err) {
+    console.error('[GitHub Repo Details Error]', err.message)
+    return res.status(500).json({ error: 'Failed to fetch repo details', details: err.message })
+  }
+}
+

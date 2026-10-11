@@ -61,17 +61,47 @@ export const authAPI = {
   me: () => api.get('/auth/me'),
 }
 
-export const sendChatMessage = (message, history) => api.post('/ai/chat', { message, history })
-export const analyzeDiff = (diff) => api.post('/ai/analyze-diff', { diff })
-export const generatePRDescription = (changes) => api.post('/ai/generate-pr-description', { changes })
+export const sendChatMessage = (message, history, model) => api.post('/ai/chat', { message, history, model })
+export const analyzeDiff = (diff, model) => api.post('/ai/analyze-diff', { diff, model })
+export const generatePRDescription = (changes, model) => api.post('/ai/generate-pr-description', { changes, model })
 
 export const githubAPI = {
   getRepositories: () => api.get('/github/repositories'),
+  getRepository: (repo) => api.get(`/github/repository/${repo}`),
   getPullRequests: (repo) => api.get(`/github/prs/${repo}`),
   getPRDiff: (repo, number) => api.get(`/github/prs/${repo}/${number}/diff`),
   getFile: (repo, path, ref) => api.get(`/github/file/${repo}?path=${encodeURIComponent(path)}&ref=${ref || 'main'}`),
+  getTree: (repo, branch) => api.get(`/github/tree/${repo}?branch=${branch || 'main'}`),
+  getCommits: (repo, branch) => api.get(`/github/commits/${repo}?branch=${branch || 'main'}`),
+  getIssues: (repo, state) => api.get(`/github/issues/${repo}?state=${state || 'open'}`),
+  createIssue: (repo, data) => api.post(`/github/issues/${repo}`, data),
   createPR: (data) => api.post('/github/create-pr', data),
+}
+
+export const taskAPI = {
+  getTasks: () => api.get('/tasks'),
+  createTask: (data) => api.post('/tasks', data),
+  updateTask: (id, data) => api.put(`/tasks/${id}`, data),
+  deleteTask: (id) => api.delete(`/tasks/${id}`),
+}
+
+export const projectAPI = {
+  getProjectData: () => api.get('/tasks/project/data'),
+  getProgress: () => api.get('/tasks/project/progress'),
+  getIssues: () => api.get('/tasks/project/issues'),
+  createIssue: (data) => api.post('/tasks/project/issues', data),
+  updateIssue: (id, data) => api.put(`/tasks/project/issues/${id}`, data),
+  deleteIssue: (id) => api.delete(`/tasks/project/issues/${id}`),
+}
+
+export const docAPI = {
+  getDocs: (q) => api.get('/docs', { params: q ? { q } : {} }),
+  getDoc: (id) => api.get(`/docs/${id}`),
+  createDoc: (data) => api.post('/docs', data),
+  updateDoc: (id, data) => api.put(`/docs/${id}`, data),
+  deleteDoc: (id) => api.delete(`/docs/${id}`),
 }
 
 export const checkHealth = () => api.get('/health')
 export default api
+
